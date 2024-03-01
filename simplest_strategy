@@ -1,7 +1,9 @@
 
 THESE CODE BLOCKS ARE FOR USE ALONGSIDE CHAPER 7: A VERY SIMPLE STRATEGY" IN MILLION PERCENT PROFITS.
 
-CUT AND PASTE LINES 6 TO 13:
+...........................................................................
+CUT AND PASTE LINES 8 TO 15:
+...........................................................................
 
 //@version=5
 strategy("Simplest Strategy", overlay=true)
@@ -12,3 +14,63 @@ if (close > open)
 if (close < open)
     strategy.close("Long")
 
+...........................................................................
+CUT AND PASTE LINES 21 TO 39:
+...........................................................................
+
+//@version=5
+strategy("Simplest Strategy", overlay=true),
+         initial_capital=10000, margin_long=0.1, margin_short=0.1,
+         default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+         commission_type=strategy.commission.percent, commission_value=0.1
+
+// STRATEGY RULES
+longEntryCondition = close > open
+longExitCondition = close < open
+
+// ORDER EXECUTION
+
+//ENTRIES
+if (longEntryCondition)
+    strategy.entry("Long", strategy.long)
+
+//EXITS
+if (longExitCondition)
+    strategy.close("Long")
+
+...........................................................................
+CUT AND PASTE LINES 45 TO 76:
+...........................................................................
+
+// This Pine Script™ under Mozilla Public License 2.0 
+// © ThousandX_Trader
+//@version=5
+
+strategy("Simplest Strategy", overlay=true),
+         initial_capital=10000, margin_long=0.1, margin_short=0.1,
+         default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+         commission_type=strategy.commission.percent, commission_value=0.1
+
+// STRATEGY RULES
+longEntryCondition = close > open
+longExitCondition = close < open
+
+// ALERT MESSAGE CONFIGURATION
+
+// Note: when creating an alert in TradingView use this syntax: 
+// {{strategy.order.alert_message}} in the alert message field. 
+// The specified alert text will then populate the alert when issued.
+
+AC = "Alert Configuration"
+longEntryAlert = input.text_area("Long Entry Alert Text", title = "Long Entry Alert")
+shortEntryAlert = input.text_area("Short Entry Alert Text", title = "Short Entry Alert")
+
+// ORDER EXECUTION
+
+// ENTRIES
+if (longEntryCondition)
+    strategy.entry("Long", strategy.long, alert_message = longEntryAlert)
+
+// EXITS
+if (longExitCondition)
+    strategy.close("Long", alert_message = shortEntryAlert)
