@@ -1,0 +1,14 @@
+
+THESE CODE BLOCKS ARE FOR USE ALONGSIDE CHAPER 7: A VERY SIMPLE STRATEGY" IN MILLION PERCENT PROFITS.
+
+CUT AND PASTE LINES 6 TO 13:
+
+//@version=5
+strategy("Simplest Strategy", overlay=true)
+
+if (close > open)
+    strategy.entry("Long", strategy.long)
+
+if (close < open)
+    strategy.close("Long")
+
