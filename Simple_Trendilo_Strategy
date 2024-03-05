@@ -1,0 +1,118 @@
+// copyright @ThousandX_Trader
+//@version=5
+
+strategy("1000X Simple Strategy with Trendilo", overlay=true, 
+         initial_capital=10000, margin_long=0.1, margin_short=0.1,
+         default_qty_type=strategy.percent_of_equity, default_qty_value=133,
+         slippage=1, backtest_fill_limits_assumption=1,
+         commission_type=strategy.commission.percent, commission_value=0.1
+         )
+
+  ///////////////////////////////////////
+ //             NOTES                 //
+///////////////////////////////////////
+
+// This script is intended for educational purposes, to demonstrate the conversion of a single indicator to a strategy. Multiple indicators should be combined to provide confirmation and confluence, prior to consider a strategy for trading purposes.  
+// Based on the original Trendilo indicator script: https://www.tradingview.com/script/h5kMWewu-Trendilo-OPEN-SOURCE/ credit @dudeowns
+// Standard Trendilo Indicator plots as an oscillator on a separate pane; in strategy mode, we simply plot as background colour when thresholds are met. 
+// indicator is a dual-purpose momentum indicator and a volatility indicator
+// "cdir" refers to cross direction of the indicator line through volatility bands. Note that it is used in the Entry and Exit Exit Conditions. 
+// to visualize the bands, please refer to the original indicator. Crossings are indicated by background shading in this strategy script.
+
+  ///////////////////////////////////////
+ //      DIRECTION FILTER             //
+///////////////////////////////////////
+
+// Direction Input 
+direction = input.string("both", title="Direction", options=["long", "short", "both"], group = "Global Input")
+
+  ///////////////////////////////////////
+ //         TRENDILO INPUTS           //
+///////////////////////////////////////
+
+// Trendilo Filter Activation Input
+use_trendilo_filter = input(true, title='Use Trendilo Filter', group = "Trendilo")
+
+src = input(close, title='Source', group = "Trendilo")
+smooth = input.int(1, title='Smoothing', minval=1, group = "Trendilo")
+length = input.int(72, title='Lookback', minval=1, group = "Trendilo")
+offset = input.float(0.85, title='ALMA Offset', step=0.01, group = "Trendilo")
+sigma = input.int(6, title='ALMA Sigma', minval=0, group = "Trendilo")
+bmult = input(2.0, 'Band Multiplier', group = "Trendilo")
+cblen = input(false, 'Custom Band Length ? (Else same as Lookback)', group = "Trendilo")
+blen = input(20, 'Custom Band Length', group = "Trendilo")
+
+  ////////////////////////////////////////////////////
+ //     TRENDILO CALCULATIONS AND FUNCTIONS        //
+////////////////////////////////////////////////////
+
+pch = ta.change(src, smooth) / src * 100
+avpch = ta.alma(pch, length, offset, sigma)
+blength = cblen ? blen : length
+rms = bmult * math.sqrt(math.sum(avpch * avpch, blength) / blength)
+cdir = avpch > rms ? 1 : avpch < -rms ? -1 : 0
+
+  ///////////////////////////////////////
+ //         STRATEGY RULES            //
+///////////////////////////////////////
+
+// Entry Conditions 
+longEntryCondition = (not use_trendilo_filter or cdir == 1) and (direction != "short") and strategy.position_size <= 0
+shortEntryCondition = (not use_trendilo_filter or cdir == -1) and (direction != "long") and strategy.position_size >= 0
+
+// Exit Conditions
+longExitCondition = cdir == -1 
+shortExitCondition = cdir == 1 
+
+  ///////////////////////////////////////
+ //         ALERT MESSAGES            //
+///////////////////////////////////////
+
+// When creating an alert use {{strategy.order.alert_message}} in message field
+
+// Alert Message Configuration
+AC = "Alert Configuration"
+longEntryAlert = input.text_area("Long Entry Alert Text", title = "Long Entry Alert", group = 'Alerts')
+shortEntryAlert = input.text_area("Short Entry Alert Text", title = "Short Entry Alert", group = 'Alerts')
+longExitAlert = input.text_area("Long Exit Alert Text", title = "Long Exit Alert", group = 'Alerts')
+shortExitAlert = input.text_area("Short Exit Alert Text", title = "Short Exit Alert", group = 'Alerts')
+
+  ///////////////////////////////////////
+ //         ORDER EXECUTION           //
+///////////////////////////////////////
+
+//~~~~~~~~~~~~~ Entry Conditions ~~~~~~~~~~~~~//
+
+// Step One: We close opposite trades before entering new ones. This is crucial so that when we flip direction, we get an Alert associated with the code allowing our automation to function.
+
+if (longEntryCondition and strategy.position_size < 0)
+    strategy.close("Short", alert_message=shortExitAlert)
+
+if (shortEntryCondition and strategy.position_size > 0)
+    strategy.close("Long", alert_message=longExitAlert)
+
+// Step Two: Enter new trades
+if (longEntryCondition)
+    strategy.entry("Long", strategy.long, alert_message=longEntryAlert)
+
+if (shortEntryCondition)
+    strategy.entry("Short", strategy.short, alert_message=shortEntryAlert)
+
+//~~~~~~~~~~~~~ Exit Conditions ~~~~~~~~~~~~~// 
+
+if (longExitCondition)
+    strategy.close("Long", alert_message=longExitAlert)
+
+if (shortExitCondition)
+    strategy.close("Short", alert_message=shortExitAlert)
+
+  ///////////////////////////////////////
+ //             PLOTTING              //
+///////////////////////////////////////
+
+// Plotting
+bgcolor(cdir == 1 ? color.new(color.green, 80) : cdir == -1 ? color.new(color.red, 80) : na, title="Background Color")
+
+// NOTE: A result table could be appended below. 
+
+
