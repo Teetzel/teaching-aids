@@ -1,6 +1,6 @@
 
-/////               O
-////            o
+/////               IMPORTANT NOTE ON INSTALLATION: LINES 31 AND 88 ARE SET TO "FALSE". THIS MEANS TABLES WILL BY DEFAULT NOT DISPLAY UNTIL TURNED ON IN STRATEGY INPUT SETTINGS. 
+////            o   DEFAULT IS "FALSE" BECAUSE IT IS INCONVENIENT FOR THE TABLES TO SHOW UP AT ALL TIMES.
 ///
 //            >"}}}}>{
 //
@@ -28,7 +28,7 @@ tableTextSize = table_text_size(i_tableTextSize)
 /// Performance Summary Dashboard
 // Inspired by https://www.tradingview.com/script/uWqKX6A2/ - Thanks VertMT
 
-i_showDashboard = input.bool(title="Performance Summary", defval=true, group="Dashboards", inline="Show Dashboards")
+i_showDashboard = input.bool(title="Performance Summary", defval=faslse, group="Dashboards", inline="Show Dashboards")
 
 f_fillCell(_table, _column, _row, _title, _value, _bgcolor, _txtcolor) =>
     _cellText = _title + "\n" + _value
@@ -85,7 +85,7 @@ if i_showDashboard
 
 // Monthly Table Performance Dashboard By @QuantNomad
 
-i_showMonthlyPerformance = input.bool(true, 'Monthly Performance', group='Dashboards', inline="Show Dashboards")
+i_showMonthlyPerformance = input.bool(false, 'Monthly Performance', group='Dashboards', inline="Show Dashboards")
 i_monthlyReturnPercision = 2
 
 if i_showMonthlyPerformance
