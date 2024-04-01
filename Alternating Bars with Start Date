@@ -1,0 +1,87 @@
+  ///////////////////////////////////////
+ //              NOTES                //
+///////////////////////////////////////
+//
+// This is script is intended for testing automation infrastructure. It allows you to run alternating bars bi- or unidirectionally, with a specified start date, 
+// avoid getting errors for generating too many orders. Trades in a known direction at known time intervals facilitates rapid testing. 
+//
+// Note - for short-cancles-long trades without an exit between trades in opposing directions, simply comment out first two "if" phrases in Order Execution.
+
+// @ThousandX_Trader
+//@version=5
+
+strategy("1000X Alternate Bars", overlay=true)
+
+  ///////////////////////////////////////
+ //    DIRECTION And START DATE       //
+///////////////////////////////////////
+
+// Direction Input 
+tradeDirection = input.string("both", title="Direction", options=["long", "short", "both"], group = "Global Input")
+
+// Date input to define the starting bar for taking trades
+startTradingDate = input.time(timestamp("2024-03-29"), title="Start Trading Date")
+
+// Determine if the current bar's time is after the startTradingDate
+tradingAllowed = time >= startTradingDate
+
+// Calculate the number of bars since the start date
+var int barsSinceStart = 0
+if (na(barsSinceStart[1]))
+    barsSinceStart := 0
+else
+    barsSinceStart := barsSinceStart[1] + 1
+
+// Determine if it's an even or odd bar since the start date
+isEvenBar = barsSinceStart % 2 == 0
+isOddBar = not isEvenBar
+
+  ///////////////////////////////////////
+ //          STRATEGY RULES           //
+///////////////////////////////////////
+
+// Entry conditions based on even or odd bars
+longCondition = isEvenBar and tradingAllowed and tradeDirection != "short" 
+shortCondition = isOddBar and tradingAllowed and tradeDirection != "long"
+
+// Exit conditions based on bar confirmation
+longExitCondition = barstate.isconfirmed
+shortExitCondition = barstate.isconfirmed
+
+   ////////////////////////////////////////
+  //         ALERT MESSAGES             //
+ ////////////////////////////////////////
+// When creating an alert use {{strategy.order.alert_message}} in message field
+
+// Alert Message Configuration
+Alert_Configuration = "Alert Configuration"
+longEntryAlert = input.text_area("Long Entry Alert Text", title = "Long Entry Alert", group = 'Alerts')
+shortEntryAlert = input.text_area("Short Entry Alert Text", title = "Short Entry Alert", group = 'Alerts')
+longExitAlert = input.text_area("Long Exit Alert Text", title = "Long Exit Alert", group = 'Alerts')
+shortExitAlert = input.text_area("Short Exit Alert Text", title = "Short Exit Alert", group = 'Alerts')
+
+  ///////////////////////////////////////
+ //         ORDER EXECUTION           //
+///////////////////////////////////////
+
+// Close opposite trades before entering new ones
+
+if (longCondition and strategy.position_size < 0)
+    strategy.close("Short", alert_message=shortExitAlert)
+
+if (shortCondition and strategy.position_size > 0)
+    strategy.close("Long", alert_message=longExitAlert)
+
+// Enter new trades
+if (longCondition)
+    strategy.entry("Long", strategy.long, alert_message=longEntryAlert)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short, alert_message=shortEntryAlert)
+
+// Exit conditions: close trades at the end of he bar
+if (longExitCondition)
+    strategy.close("Long", alert_message=longExitAlert)
+
+if (shortExitCondition)
+    strategy.close("Short", alert_message=shortExitAlert)
